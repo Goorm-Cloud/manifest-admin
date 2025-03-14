@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-server
+  namespace: zoochacha
+spec:
+  replicas: 1  # 서버는 확장 가능하도록 설정
+  selector:
+    matchLabels:
+      app: admin-server
+  template:
+    metadata:
+      labels:
+        app: admin-server
+    spec:
+      containers:
+        - name: admin-server
+          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:latest
+          imagePullPolicy: Always
+          env:
+            - name: DB_HOST
+              value: "mysql.zoochacha-db.svc.cluster.local"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "zoochacha"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              value: ""
+          ports:
+            - containerPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-server
+  namespace: zoochacha
+spec:
+  selector:
+    app: admin-server
+  ports:
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+  type: ClusterIP
