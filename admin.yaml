@@ -13,23 +13,60 @@ spec:
       labels:
         app: admin-server
     spec:
+      serviceAccountName: admin-service-sa
       containers:
         - name: admin-server
-          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:8
+          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:latest
           imagePullPolicy: Always
-          env:
-            - name: DB_HOST
-              value: "mysql.zoochacha-db.svc.cluster.local"
-            - name: DB_PORT
-              value: "3306"
-            - name: DB_NAME
-              value: "zoochacha"
-            - name: DB_USER
-              value: "root"
-            - name: DB_PASSWORD
-              value: ""
           ports:
             - containerPort: 8001
+          command: ["gunicorn"]
+          args: ["--bind", "0.0.0.0:8001", "--workers", "4", "--timeout", "300", "--log-level", "debug", "app:app"]
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: admin-service-secret
+                  key: FLASK_SESSION_SECRET_KEY
+            - name: KAKAO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: admin-service-secret
+                  key: KAKAO_API_KEY
+            - name: CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: admin-service-secret
+                  key: COGNITO_CLIENT_SECRET
+            - name: AUTHORIZE_REDIRECT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: admin-service-secret
+                  key: AUTHORIZE_REDIRECT_URL
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: SQLALCHEMY_DATABASE_URI
+              value: "mysql+pymysql://admin:zoochacha2024@zoochacha-db.cxqxvqvxvpxm.ap-northeast-2.rds.amazonaws.com:3306/zoochacha"
+            - name: ADMIN_SERVICE_URL
+              value: "/admin"
+            - name: MAP_SERVICE_URL
+              value: "/map"
+            - name: RESERVATION_SERVICE_URL
+              value: "/reservation"
+            - name: PARKINGLOT_SERVICE_URL
+              value: "/parkinglot"
+            - name: RESERVATION_DETAIL_SERVICE_URL
+              value: "/reservation-detail"
+            - name: FLASK_DEBUG
+              value: "1"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8001
+            initialDelaySeconds: 5
+            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -44,3 +81,11 @@ spec:
       port: 8001
       targetPort: 8001
   type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-service-sa
+  namespace: zoochacha
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::651706756261:role/zoochacha-admin-secrets-manager
