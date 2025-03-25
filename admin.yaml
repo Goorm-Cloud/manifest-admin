@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: admin-server
-          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:53
+          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:54
           imagePullPolicy: Always
           env:
             - name: DB_HOST
