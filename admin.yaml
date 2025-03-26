@@ -16,7 +16,7 @@ spec:
       serviceAccountName: admin-service-sa
       containers:
         - name: admin-server
-          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:91
+          image: 651706756261.dkr.ecr.ap-northeast-2.amazonaws.com/admin-service:92
           imagePullPolicy: Always
           ports:
             - containerPort: 8001
